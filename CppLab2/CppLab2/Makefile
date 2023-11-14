@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -Wall -g
+CXXFLAGS = -Wall -g -fPIC
 LIBS = -lsqlite3
 
 SRCDIR = .
@@ -13,24 +13,24 @@ OBJECTS = $(patsubst $(SRCDIR)/%.cpp, $(BUILDDIR)/%.o, $(SOURCES))
 DEPS = $(OBJECTS:.o=.d)
 
 LIBDIR = lib
-LIBNAME = libemployee.a
-STATICLIB = $(LIBDIR)/$(LIBNAME)
+LIBNAME = libemployee.so
+DYNAMICLIB = $(LIBDIR)/$(LIBNAME)
 
 .PHONY: all clean
 
 all: $(TARGET)
 
-$(TARGET): $(STATICLIB) $(OBJECTS)
+$(TARGET): $(DYNAMICLIB) $(OBJECTS)
 	@mkdir -p $(BINDIR)
-	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@ $(LIBS) -L$(LIBDIR) -lemployee
+	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@ $(LIBS) -L$(LIBDIR) -Wl,-rpath=$(LIBDIR) -lemployee
 
 $(BUILDDIR)/%.o: $(SRCDIR)/%.cpp
 	@mkdir -p $(BUILDDIR)
 	$(CXX) $(CXXFLAGS) -I$(INCDIR) -MMD -MP -c $< -o $@
 
-$(STATICLIB): $(BUILDDIR)/Employee.o
+$(DYNAMICLIB): $(BUILDDIR)/Employee.o
 	@mkdir -p $(LIBDIR)
-	ar rcs $@ $<
+	$(CXX) -shared $(CXXFLAGS) -o $@ $^
 
 clean:
 	rm -rf $(BUILDDIR) $(BINDIR) $(LIBDIR)
